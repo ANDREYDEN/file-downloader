@@ -1,20 +1,37 @@
-import { Directory, File } from "expo-file-system";
-import { Button, View } from "react-native";
+import { Asset } from "expo-asset";
+import { File, Paths } from "expo-file-system";
+import { useState } from "react";
+import { Button, Text, View } from "react-native";
 
 export default function Index() {
-  const downloadFile = async () => {
+  const [imageLocalUri, setImageLocalUri] = useState<string | null>();
+  const [computedLocalUri, setComputedLocalUri] = useState<string | null>();
+  const [imageBase64, setImageBase64] = useState<string | null>();
+  const [cacheListing, setCacheListing] = useState<string>();
+  const [errorMessage, setErrorMessage] = useState<string | null>();
+
+  const getLocalAssetUri = async () => {
     try {
-      const base64Data = "data:text/plain;base64,SGVsbG8sIFdvcmxkIQ==";
+      const imageModule = require("../assets/images/react_logo.png");
+      const [{ localUri, hash, type }] = await Asset.loadAsync(imageModule);
+      setImageLocalUri(localUri);
 
-      const directory = await Directory.pickDirectoryAsync();
+      const cacheContents = Paths.cache.list();
+      const fileNames = cacheContents
+        .filter((file) => file instanceof File)
+        .map((file) => file.name)
+        .join(" | ");
+      setCacheListing(fileNames);
 
-      const file = new File(directory.uri, "test.txt");
-      file.create({ overwrite: true });
-      file.write(base64Data, { encoding: "base64" });
+      const uri = `${Paths.cache.uri}ExponentAsset-${hash}.${type}`;
+      setComputedLocalUri(uri);
 
-      console.log("File downloaded to:", file.uri);
+      const cacheFile = new File(uri);
+      const base64Data = await cacheFile.base64();
+      setImageBase64(base64Data);
     } catch (error) {
       console.error("Error downloading file:", error);
+      setErrorMessage((error as Error).message);
     }
   };
 
@@ -26,7 +43,16 @@ export default function Index() {
         alignItems: "center",
       }}
     >
-      <Button title="Download File" onPress={downloadFile} />
+      <Button title="Get Local Asset URI" onPress={getLocalAssetUri} />
+      <View style={{ gap: 10, alignItems: "flex-start" }}>
+        {imageLocalUri && <Text>Local URI: {imageLocalUri}</Text>}
+        {computedLocalUri && <Text>Computed URI: {computedLocalUri}</Text>}
+        {imageBase64 && <Text>Base64: {imageBase64.slice(0, 30)}...</Text>}
+        {cacheListing !== undefined && (
+          <Text>Cache Contents: {cacheListing}</Text>
+        )}
+        {errorMessage && <Text>Error: {errorMessage}</Text>}
+      </View>
     </View>
   );
 }

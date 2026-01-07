@@ -40,6 +40,14 @@
             "backgroundColor": "#000000"
           }
         }
+      ],
+      [
+        "expo-asset",
+        {
+          "assets": [
+            "./assets/images"
+          ]
+        }
       ]
     ],
     "experiments": {
