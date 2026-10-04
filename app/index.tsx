@@ -1,4 +1,4 @@
-import { Directory, File } from "expo-file-system";
+import { Directory } from "expo-file-system";
 import { Button, View } from "react-native";
 
 export default function Index() {
@@ -8,8 +8,7 @@ export default function Index() {
 
       const directory = await Directory.pickDirectoryAsync();
 
-      const file = new File(directory.uri, "test.txt");
-      file.create({ overwrite: true });
+      const file = directory.createFile("test.txt", "text/plain");
       file.write(base64Data, { encoding: "base64" });
 
       console.log("File downloaded to:", file.uri);
